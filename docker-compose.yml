@@ -1,0 +1,100 @@
+version: '3.8'
+
+networks:
+  z-waste-net:
+
+services:
+  httpd:
+    container_name: httpd
+    build:
+      context: .docker
+      dockerfile: httpd.dockerfile
+      args:
+        - UID=${UID:-1000}
+        - GID=${GID:-1000}
+    image: z-waste-httpd:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./src:/var/www/html:delegated
+      - ./logs/httpd:/var/log/apache2
+    depends_on:
+      - mysql
+      - mailhog
+    networks:
+      - z-waste-net
+
+  composer:
+    container_name: composer
+    image: z-waste-httpd:latest
+    volumes:
+      - ./src:/var/www/html
+    depends_on:
+      - httpd
+    entrypoint: [ 'composer' ]
+    networks:
+      - z-waste-net
+
+  artisan:
+    container_name: artisan
+    image: z-waste-httpd:latest
+    volumes:
+      - ./src:/var/www/html:delegated
+    depends_on:
+      - httpd
+      - mysql
+    entrypoint: [ 'php', '/var/www/html/artisan' ]
+    networks:
+      - z-waste-net
+
+  mysql:
+    container_name: mysql
+    image: mysql:8.0
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: homestead
+      MYSQL_USER: homestead
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: secret
+      SERVICE_TAGS: dev
+      SERVICE_NAME: mysql
+    command: [ "--log_bin_trust_function_creators=1" ]
+    networks:
+      - z-waste-net
+
+  npm:
+    container_name: npm
+    build:
+      context: .docker
+      dockerfile: npm.dockerfile
+      args:
+        - NPM_TOKEN=${NPM_TOKEN}
+        - SSH_AUTH_SOCK=/run/host-services/ssh-auth.sock
+    environment:
+      - SSH_AUTH_SOCK=/run/host-services/ssh-auth.sock
+    volumes:
+      - ./src:/var/www/html
+      - type: bind
+        source: /run/host-services/ssh-auth.sock
+        target: /run/host-services/ssh-auth.sock
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+      - "5173:5173"
+    working_dir: /var/www/html
+    entrypoint: [ 'npm' ]
+    networks:
+      - z-waste-net
+
+  mailhog:
+    container_name: mailhog
+    image: mailhog/mailhog:latest
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - z-waste-net
