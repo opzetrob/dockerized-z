@@ -29,13 +29,12 @@ RUN docker-php-ext-install pdo pdo_mysql mysqli
 RUN docker-php-ext-install intl
 RUN docker-php-ext-install zip
 
-# Copy the pem files to the container
+# Copy the certificate and key to the container
 RUN mkdir -p /etc/apache2/ssl
 COPY httpd/cert/httpd-self-signed.cert /etc/apache2/ssl/httpd-self-signed.cert
 COPY httpd/cert/httpd-self-signed.key /etc/apache2/ssl/httpd-self-signed.key
-#COPY cert/*.pem /etc/apache2/ssl/
 
-# Copy our Apache configuration file to the container
+# Copy the Apache configuration file to the container
 COPY httpd/httpd.conf /etc/apache2/conf/httpd.conf
 
 # Copy the Apache virtual host configuration file to the container
