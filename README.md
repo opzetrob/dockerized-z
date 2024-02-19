@@ -1,6 +1,6 @@
 # dockerized-z
-## Wat doet het?
-Deze repository is bedoeld om met één commando een complete lokale (development) installatie maken van _ZWaste_, in een Docker omgeving. \
+## Wat is het?
+Met deze repository bouw je met één commando een complete, lokale (development) installatie van _zWaste_, in een Docker omgeving. \
 De `Makefile` in deze repository biedt een aantal commando's die de handelingen rondom de installatie voor hun rekening nemen. \
 Na installatie zal de site beschikbaar zijn onder: https://localhost \
 Omdat gebruik gemaakt wordt van een _self-signed certificate_ zal je browser misschien een waarschuwing geven als je deze url voor het eerst bezoekt. \
@@ -26,7 +26,11 @@ user@My-Device dockerized-z % make
 * De zWaste database wordt gevuld met wat bruikbare data (`artisan db:seed`, `artisan script:run scripts/init_opzet.script`)
 
 Een overzicht van de meest gebruikte `make` commando's vind je onder ['Make commands'](#make-commands)
- 
+
+### Optioneel:
+Om niet `docker compose run --rm` te hoeven gebruiken bij het aanroepen van Composer, Artisan of NPM kun je het bestand `aliases.txt` gebruiken. \
+In de Terminal, typ `. ./aliases.txt` om voor de duur van je Terminal-sessie 
+
 ## Benodigdheden:
 * Voorlopig worden alleen _Apple Macs_ met een _M*_ processor ondersteund.
 * _GitHub_: Check deze repository uit (als je dit leest heb je deze stap waarschijnlijk al gedaan): https://github.com/opzetrob/dockerized-z.git
@@ -41,13 +45,18 @@ user@My-Device my-dir %
 ```
 - Een _Subversion_ client, eventueel geïnstalleerd via Homebrew met commando: `brew install subversion` \
   Om te verifiëren, run: `svn --version`
-- [CHECKEN] _Openssl_, eventueel geïnstalleerd via Homebrew met commando: `brew install openssl@3` \
-  Om te verifiëren, run: `openssl -v`
+- ~~[CHECKEN] _Openssl_, eventueel geïnstalleerd via Homebrew met commando: `brew install openssl@3` \
+  Om te verifiëren, run: `openssl -v`~~
+- `mkcert` mkcert is een simpele tool voor het maken van locally-trusted development certificaten. Er is geen configuratie nodig.
+```shell
+brew install mkcert
+brew install nss # if you use Firefox
+```
 - Meer..?
 
 ## Make commands
 * `make`: Volledige installatie van site en database. Gebruik dit als je een nieuwe site wilt beginnen
 * `make install`: Installatie zonder de stappen `migrate` en `seed`
 * `make migrate`: Voert een _migratie_ van de database uit
-* `make seed`: Voert het _seeden_ van de database uit, de stap `migrate` wordt eerst aangeroepen
-* `make clean`: Verwijdert de certificaten, zet de waarde van `DB_HOST` terug naar `localhost`, stopt en verwijdert de Docker _containers_, _images_ en _volumes_
+* `make seed`: Voert een _seed_ van de database uit, de stap `migrate` wordt eerst aangeroepen
+* `make clean`: Verwijdert de certificaten, zet de waarde van `DB_HOST` terug naar `localhost`, stopt en verwijdert de gebruikte Docker _containers_, _images_ en _volumes_

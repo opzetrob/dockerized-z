@@ -36,7 +36,7 @@ WORKDIR /var/www/html
 
 RUN mkdir -p -m 0700 ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
 RUN --mount=type=ssh
-RUN echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > /root/.npmrc \
+RUN echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > /root/.npmrc
 
 COPY . .
 CMD npm start

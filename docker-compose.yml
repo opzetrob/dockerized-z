@@ -1,7 +1,9 @@
-version: '3.8'
+version: '3.9'
 
 networks:
   z-waste-net:
+    name: z-waste-network
+    driver: bridge
 
 services:
   httpd:
@@ -12,6 +14,9 @@ services:
       args:
         - UID=${UID:-1000}
         - GID=${GID:-1000}
+        - DOMAIN
+        - CERT
+        - KEY
     image: z-waste-httpd:latest
     ports:
       - "80:80"
