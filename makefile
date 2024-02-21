@@ -1,17 +1,19 @@
 #!make
 include .env
 PROJ_INSTALL_PATH := $(ZWASTE_INSTALL_PATH)
-ZWASTE_ENV_PATH := $(PROJ_INSTALL_PATH)/.env
 DOCKER_COMPOSE := docker compose
-DOMAIN := $(DOMAIN)
 CERT_PATH := .docker/httpd/cert/
 DOMAIN_CERT := $(DOMAIN).pem
 DOMAIN_KEY := $(DOMAIN)-key.pem
-INITIAL_CONTAINER ?=
 .DEFAULT_GOAL := all
+ifeq ($(shell arch),arm64)
+	MAILHOG_IMAGE := jcalonso/mailhog
+else
+	MAILHOG_IMAGE ?= mailhog/mailhog
+endif
 export
 
-.PHONY: all update-env install migrate seed clean user-deny-install-dir user-confirm-install-dir exit \
+.PHONY: all guard-env update-env install migrate seed clean user-deny-install-dir user-confirm-install-dir exit \
 --msg-install --msg-install-end --msg-self-signed-cert --msg-opzet-dir --msg-copyenvfor --msg-update-env --msg-seed \
 --msg-migrate --msg-empty-install-dir --msg-user-deny-install-dir --msg-install-init --msg-install-end --msg-clean
 
@@ -20,37 +22,71 @@ ifeq ($(PROJ_INSTALL_PATH),)
 all: --msg-empty-install-dir exit
 install: --msg-empty-install-dir exit
 else
-all: install seed
+# Calling 'make' will do a full install and database seed
+all: guard-env install seed
+# Calling 'make install' will do a full install
+# Run Composer install and NPM ci in their respective containers.
+# Note: Targets after ':' are >prerequisites<; they will be called >before< the install target is run
 install: --msg-install user-confirm-install-dir docker-up update-env --msg-install-init
 	$(DOCKER_COMPOSE) run --rm composer install --prefer-dist
 	$(DOCKER_COMPOSE) run --rm npm ci
 	@--msg-install-end
 endif
 
-$(DOMAIN_CERT): --msg-self-signed-cert
+# Will check all environment variables provided as prerequisites with the format 'guard-MY_ENV_VAR'
+guard-env: | guard-DOMAIN guard-ZWASTE_INSTALL_PATH guard-VENDOR guard-ENVIRONMENT guard-SVN_INSTALL_BRANCH_URL \
+guard-SSH_AUTH_SOCK guard-MYSQL_SERVICE_NAME guard-MAILHOG_IMAGE guard-NPM_TOKEN
+
+# Checks if the environment variable can be found and exits when it's missing
+guard-%:
+	$(eval len := $(shell printf '%s' $(subst ',','.',${*}) | wc -c))
+	$(eval run := $(shell printf '─%.0s' {1..$(len)}))
+	@if [ "${${*}}" = "" ]; then \
+		echo "┌─ MISSING ENV VARIABLE $(run)────────────────────────────────────────────────┐"; \
+		echo "│  Missing environment variable '$*', it may be missing from your .env file │"; \
+		echo "└──$(run)─────────────────────────────────────────────────────────────────────┘"; \
+		exit 1; \
+	fi
+
+# Create cert and key .pem files for the domain
+# Note: This target refers to a specific file. If the file is found to be present, the target code will >not< run
+$(CERT_PATH)$(DOMAIN_CERT): --msg-self-signed-cert
 	mkcert -key-file $(CERT_PATH)$(DOMAIN_KEY) -cert-file $(CERT_PATH)$(DOMAIN_CERT) $(DOMAIN)
 
+# Check if a path /opzet exists in the install path and check out the zWaste project from SVN if it doesn't
+# Note: This target refers to a specific file. If the file is found to be present, the target code will >not< run
 $(PROJ_INSTALL_PATH)/opzet: --msg-opzet-dir
 	mkdir -p $(PROJ_INSTALL_PATH)
 	svn checkout $(SVN_INSTALL_BRANCH_URL) $(PROJ_INSTALL_PATH)
 	mkdir logs
 
+# Trigger the copyenvfor composer command inside the composer container
+# Note: This target refers to a specific file. If the file is found to be present, the target code will >not< run
 $(PROJ_INSTALL_PATH)/.env: $(PROJ_INSTALL_PATH)/opzet --msg-copyenvfor
 	$(DOCKER_COMPOSE) run --rm composer run copyenvfor $(VENDOR) $(ENVIRONMENT)
 
+# Update the project's .env file to work with a containerized environment
 update-env: $(PROJ_INSTALL_PATH)/.env --msg-update-env
-	sed -i "" "s/^DB_HOST=.*/DB_HOST=$(MYSQL_SERVICE_NAME)/" $(ZWASTE_ENV_PATH)
+	sed -i "" "s/^DB_HOST=.*/DB_HOST=$(MYSQL_SERVICE_NAME)/" $(PROJ_INSTALL_PATH)/.env
 
-docker-up: $(DOMAIN_CERT) --msg-docker-up
-		@CERT=$(DOMAIN_CERT) \
-		KEY=$(DOMAIN_KEY) \
-		$(DOCKER_COMPOSE) up -d --build httpd
+# Bring up the http container and it's dependencies
+# -d: In detached mode: Run containers in the background
+# --build: Build the images used before starting containers
+docker-up: $(CERT_PATH)$(DOMAIN_CERT) --msg-docker-up
+	@echo $(MAILHOG_IMAGE)
+	@CERT=$(DOMAIN_CERT) \
+	KEY=$(DOMAIN_KEY) \
+	MAILHOG_IMAGE=$(MAILHOG_IMAGE) \
+	$(DOCKER_COMPOSE) up -d --build httpd
 
+# User canceled the install - Abort
 user-deny-install-dir: --msg-user-deny-install-dir exit
 
+# Exit the make process
 exit:
 	@false
 
+# Prompt user to confirm the install dir
 user-confirm-install-dir:
 	@while [ -z "$$INSTALL_PATH_OK" ]; do \
     	read -r -p "Your install path is: [ $(PROJ_INSTALL_PATH) ], continue installation (y/N)? " INSTALL_PATH_OK;\
@@ -59,18 +95,12 @@ user-confirm-install-dir:
 		$(MAKE) user-deny-install-dir ; \
     fi
 
-user-confirm-overwrite-dir:
-	@while [ -z "$$INSTALL_PATH_OK" ]; do \
-    	read -r -p "Your install directory exists and will be overwritten: [ $(PROJ_INSTALL_PATH) ], continue installation (y/N)? " INSTALL_PATH_OK;\
-    done ; \
-    if [ $$INSTALL_PATH_OK != "y" ]; then \
-		$(MAKE) user-deny-install-dir ; \
-    fi
-
+# Seed the database and run the init_opzet script for additional, useful data
 seed: migrate --msg-seed
 	$(DOCKER_COMPOSE) run --rm artisan db:seed
 	$(DOCKER_COMPOSE) run --rm artisan script:run scripts/init_opzet.script
 
+# Clear the cache and perform the migrations
 migrate: --msg-migrate
 	$(DOCKER_COMPOSE) run --rm artisan config:cache
 	$(DOCKER_COMPOSE) run --rm artisan migrate
@@ -78,7 +108,7 @@ migrate: --msg-migrate
 clean: --msg-clean
 	-@rm -rf logs
 	-@rm .docker/httpd/cert/*
-	-@sed -i "" "s/^DB_HOST=$(MYSQL_SERVICE_NAME)/DB_HOST=localhost/" $(ZWASTE_ENV_PATH)
+	-@sed -i "" "s/^DB_HOST=$(MYSQL_SERVICE_NAME)/DB_HOST=localhost/" $(PROJ_INSTALL_PATH)/.env
 	-$(DOCKER_COMPOSE) down
 	-$(DOCKER_COMPOSE) rm -vf
 	-docker image prune -af

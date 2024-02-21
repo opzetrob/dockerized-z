@@ -32,7 +32,7 @@ Om niet `docker compose run --rm` te hoeven gebruiken bij het aanroepen van Comp
 In de Terminal, typ `. ./aliases.txt` om voor de duur van je Terminal-sessie 
 
 ## Benodigdheden:
-* Voorlopig worden alleen _Apple Macs_ met een _M*_ processor ondersteund.
+* Voorlopig worden alleen _Apple Macs_ ondersteund.
 * _GitHub_: Check deze repository uit (als je dit leest heb je deze stap waarschijnlijk al gedaan): https://github.com/opzetrob/dockerized-z.git
 * [Docker Desktop](https://www.docker.com/products/docker-desktop/) geïnstalleerd en draaiend op je systeem. De installatiehandleiding vind je hier: [Mac](https://docs.docker.com/desktop/install/mac-install/), [Windows](https://docs.docker.com/desktop/install/windows-install/), [Linux](https://docs.docker.com/desktop/install/linux-install/)
 * [Homebrew](https://brew.sh) geïnstalleerd en draaiend op je systeem. Voor installatie op _Windows_ of _Linux_, [check hier](https://docs.brew.sh/Homebrew-on-Linux).\
