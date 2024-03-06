@@ -11,7 +11,6 @@ ENV GID=${GID}
 
 RUN apt-get update && \
     apt-get install -y \
-    ca-certificates \
     git \
     subversion \
     libpq-dev \
@@ -43,9 +42,6 @@ RUN docker-php-ext-install pgsql \
 RUN mkdir -p /etc/apache2/ssl
 COPY /httpd/cert/${CERT} /etc/apache2/ssl/${CERT}
 COPY /httpd/cert/${KEY} /etc/apache2/ssl/${KEY}
-#COPY /httpd/cert/cacert.pem /etc/ssl/certs/cacert.pem
-#RUN echo "curl.cainfo=\"/etc/apache2/ssl/${CERT}\"" >> $PHP_INI_DIR/php.ini-development && \
-#    echo "openssl.cafile=\"/etc/apache2/ssl/${CERT}\"" >> $PHP_INI_DIR/php.ini-development
 
 # Add our domain and pem-files to Apache envvars
 RUN echo "export DOMAIN=${DOMAIN}" >> /etc/apache2/envvars && \

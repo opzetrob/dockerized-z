@@ -1,5 +1,4 @@
 FROM debian:latest
-ARG TOKEN
 ARG NPM_TOKEN
 ENV NPM_TOKEN=$NPM_TOKEN
 ARG SSH_AUTH_SOCK
@@ -35,16 +34,7 @@ ENV PATH $NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
 
 WORKDIR /var/www/html
 
-RUN --mount=type=secret,id=TOKEN \
-    echo "machine github.com login x password $(head -n 1 /run/secrets/TOKEN)" > ~/.netrc && \
-git config \
-    --global \
-    url."https://${GITHUB_ID}:${TOKEN}@github.com/".insteadOf \
-    "https://github.com/"
-
-RUN mkdir /root/.ssh && \
-    touch /root/.ssh/known_hosts && \
-    ssh-keyscan github.com >> /etc/ssh/ssh_known_hosts
+RUN mkdir -p -m 0700 ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
 RUN --mount=type=ssh
 RUN echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > /root/.npmrc
 

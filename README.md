@@ -6,6 +6,7 @@ Na installatie zal de site beschikbaar zijn onder: https://localhost \
 Omdat gebruik gemaakt wordt van een _self-signed certificate_ zal je browser misschien een waarschuwing geven als je deze url voor het eerst bezoekt. \
 Het is compleet veilig om dit certificaat te accepteren, waarna je de site met https kunt bezoeken.
 ## Nieuwe installatie
+* Kopiëer `.env.example` naar `.env`
 * In `.env`, vul het volledige pad in naar de nieuwe installatie-directory van zWaste, bijvoorbeeld:
 ```dotenv
 ZWASTE_INSTALL_PATH=~/PhpstormProjects/zwaste
