@@ -6,6 +6,7 @@ CERT_PATH := .docker/httpd/cert/
 DOMAIN_CERT := $(DOMAIN).pem
 DOMAIN_KEY := $(DOMAIN)-key.pem
 .DEFAULT_GOAL := all
+DOMAIN_IN_HOSTS := $(shell grep -n $(DOMAIN) /etc/hosts | tail -1)
 ifeq ($(shell arch),arm64)
 	MAILHOG_IMAGE := jcalonso/mailhog
 else
@@ -15,7 +16,8 @@ export
 
 .PHONY: all guard-env update-env install migrate seed clean user-deny-install-dir user-confirm-install-dir exit \
 --msg-install --msg-install-end --msg-self-signed-cert --msg-opzet-dir --msg-copyenvfor --msg-update-env --msg-seed \
---msg-migrate --msg-empty-install-dir --msg-user-deny-install-dir --msg-install-init --msg-install-end --msg-clean
+--msg-migrate --msg-empty-install-dir --msg-user-deny-install-dir --msg-install-init --msg-install-end --msg-clean \
+npm
 
 all:
 ifeq ($(PROJ_INSTALL_PATH),)
@@ -27,9 +29,7 @@ all: guard-env install seed
 # Calling 'make install' will do a full install
 # Run Composer install and NPM ci in their respective containers.
 # Note: Targets after ':' are >prerequisites<; they will be called >before< the install target is run
-install: --msg-install user-confirm-install-dir docker-up update-env --msg-install-init
-	$(DOCKER_COMPOSE) run --rm composer install --prefer-dist
-	$(DOCKER_COMPOSE) run --rm npm ci
+install: --msg-install user-confirm-install-dir docker-up update-env --msg-install-init composer-install npm-ci
 	@--msg-install-end
 endif
 
@@ -50,20 +50,25 @@ guard-%:
 
 # Create cert and key .pem files for the domain
 # Note: This target refers to a specific file. If the file is found to be present, the target code will >not< run
-$(CERT_PATH)$(DOMAIN_CERT): --msg-self-signed-cert
-	mkcert -key-file $(CERT_PATH)$(DOMAIN_KEY) -cert-file $(CERT_PATH)$(DOMAIN_CERT) $(DOMAIN)
+$(CERT_PATH)$(DOMAIN_CERT): add-hosts --msg-self-signed-cert
+	@mkcert -key-file $(CERT_PATH)$(DOMAIN_KEY) -cert-file $(CERT_PATH)$(DOMAIN_CERT) $(DOMAIN)
 
 # Check if a path /opzet exists in the install path and check out the zWaste project from SVN if it doesn't
 # Note: This target refers to a specific file. If the file is found to be present, the target code will >not< run
 $(PROJ_INSTALL_PATH)/opzet: --msg-opzet-dir
 	mkdir -p $(PROJ_INSTALL_PATH)
 	svn checkout $(SVN_INSTALL_BRANCH_URL) $(PROJ_INSTALL_PATH)
-	mkdir logs
+	-mkdir logs
 
 # Trigger the copyenvfor composer command inside the composer container
 # Note: This target refers to a specific file. If the file is found to be present, the target code will >not< run
-$(PROJ_INSTALL_PATH)/.env: $(PROJ_INSTALL_PATH)/opzet --msg-copyenvfor
-	$(DOCKER_COMPOSE) run --rm composer run copyenvfor $(VENDOR) $(ENVIRONMENT)
+$(PROJ_INSTALL_PATH)/.env: $(PROJ_INSTALL_PATH)/opzet --msg-copyenvfor composer-copyenvfor
+
+# Adds the domain to the hosts file, you may need to enter your password
+add-hosts: --msg-add-hosts
+ifeq ($(DOMAIN_IN_HOSTS),)
+	$(shell echo '127.0.0.1       $(DOMAIN)' | sudo tee -a /etc/hosts > /dev/null)
+endif
 
 # Update the project's .env file to work with a containerized environment
 update-env: $(PROJ_INSTALL_PATH)/.env --msg-update-env
@@ -72,12 +77,23 @@ update-env: $(PROJ_INSTALL_PATH)/.env --msg-update-env
 # Bring up the http container and it's dependencies
 # -d: In detached mode: Run containers in the background
 # --build: Build the images used before starting containers
-docker-up: $(CERT_PATH)$(DOMAIN_CERT) --msg-docker-up
-	@echo $(MAILHOG_IMAGE)
+docker-up: $(CERT_PATH)$(DOMAIN_CERT) rebuild --msg-docker-up
+
+# To do a simple `docker compose up` without losing the pem files
+rebuild:
 	@CERT=$(DOMAIN_CERT) \
 	KEY=$(DOMAIN_KEY) \
 	MAILHOG_IMAGE=$(MAILHOG_IMAGE) \
 	$(DOCKER_COMPOSE) up -d --build httpd
+
+npm:
+	@./npm.sh
+# Run NPM on it's container or locally, depending on the ENVIRONMENT value
+npm-%:
+	@./npm.sh ${*}
+
+composer-%:
+	@./composer.sh
 
 # User canceled the install - Abort
 user-deny-install-dir: --msg-user-deny-install-dir exit
@@ -119,7 +135,6 @@ clean: --msg-clean
 	@echo "┌─ .DOCKER/NGINX/NGINX-SELF-SIGNED.CERT ───────────────────────────┐"
 	@echo "│  Create self signed certificate and key in '.docker/httpd/cert'  │"
 	@echo "└──────────────────────────────────────────────────────────────────┘"
-	@echo
 
 --msg-opzet-dir:
 	@echo
@@ -169,6 +184,12 @@ clean: --msg-clean
 	@echo "┌─ INSTALL-START ────────────────────────────┐"
 	@echo "│  Start installation of the zWaste project  │"
 	@echo "└────────────────────────────────────────────┘"
+
+--msg-add-hosts:
+	@echo
+	@echo "┌─ ADD HOSTS ──────────────────────────────────┐"
+	@echo "│  Add the domain to the hosts file if needed  │"
+	@echo "└──────────────────────────────────────────────┘"
 
 --msg-empty-install-dir:
 	@echo

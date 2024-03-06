@@ -11,6 +11,7 @@ ENV GID=${GID}
 
 RUN apt-get update && \
     apt-get install -y \
+    ca-certificates \
     git \
     subversion \
     libpq-dev \
@@ -18,6 +19,12 @@ RUN apt-get update && \
     libicu-dev \
     libzip-dev \
     zip
+
+RUN pecl install xdebug && \
+    docker-php-ext-enable xdebug && \
+    echo "xdebug.mode=debug" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini && \
+    echo "xdebug.discover_client_host=true" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini && \
+    echo "xdebug.client_host = host.docker.internal" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
 
 RUN export PATH=${PATH}:/usr/bin/svn
 
@@ -34,14 +41,16 @@ RUN docker-php-ext-install pgsql \
 
 # Copy the pem-files to the container
 RUN mkdir -p /etc/apache2/ssl
-RUN echo ${PWD} && ls -lR
 COPY /httpd/cert/${CERT} /etc/apache2/ssl/${CERT}
 COPY /httpd/cert/${KEY} /etc/apache2/ssl/${KEY}
+#COPY /httpd/cert/cacert.pem /etc/ssl/certs/cacert.pem
+#RUN echo "curl.cainfo=\"/etc/apache2/ssl/${CERT}\"" >> $PHP_INI_DIR/php.ini-development && \
+#    echo "openssl.cafile=\"/etc/apache2/ssl/${CERT}\"" >> $PHP_INI_DIR/php.ini-development
 
 # Add our domain and pem-files to Apache envvars
-RUN echo "export DOMAIN=${DOMAIN}" >> /etc/apache2/envvars
-RUN echo "export DOMAIN_CERT=${CERT}" >> /etc/apache2/envvars
-RUN echo "export DOMAIN_KEY=${KEY}" >> /etc/apache2/envvars
+RUN echo "export DOMAIN=${DOMAIN}" >> /etc/apache2/envvars && \
+    echo "export DOMAIN_CERT=${CERT}" >> /etc/apache2/envvars && \
+    echo "export DOMAIN_KEY=${KEY}" >> /etc/apache2/envvars
 
 # Copy the Apache ssl virtual host configuration to the container
 COPY httpd/default-ssl.conf /etc/apache2/sites-enabled/default-ssl.conf

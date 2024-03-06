@@ -1,5 +1,11 @@
 version: '3.9'
 
+x-volume-install:
+  &volume-install
+    type: bind
+    source: ${ZWASTE_INSTALL_PATH}
+    target: /var/www/html
+
 networks:
   z-waste-net:
     name: z-waste-network
@@ -22,7 +28,7 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ${ZWASTE_INSTALL_PATH}:/var/www/html
+      - <<: *volume-install
     depends_on:
       - mysql
       - mailhog
@@ -33,7 +39,7 @@ services:
     container_name: composer
     image: z-waste-httpd:latest
     volumes:
-      - ${ZWASTE_INSTALL_PATH}:/var/www/html
+      - <<: *volume-install
     depends_on:
       - httpd
     entrypoint: [ 'composer' ]
@@ -44,7 +50,7 @@ services:
     container_name: artisan
     image: z-waste-httpd:latest
     volumes:
-      - ${ZWASTE_INSTALL_PATH}:/var/www/html
+      - <<: *volume-install
     depends_on:
       - httpd
       - mysql
@@ -83,7 +89,7 @@ services:
     environment:
       - SSH_AUTH_SOCK=${SSH_AUTH_SOCK}
     volumes:
-      - ${ZWASTE_INSTALL_PATH}:/var/www/html
+      - <<: *volume-install
       - type: bind
         source: ${SSH_AUTH_SOCK}
         target: ${SSH_AUTH_SOCK}
@@ -106,4 +112,8 @@ services:
       - z-waste-net
 
 volumes:
-    mysql-data:
+  mysql-data:
+
+secrets:
+  token:
+    environment: TOKEN
