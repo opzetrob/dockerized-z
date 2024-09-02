@@ -1,7 +1,6 @@
 FROM debian:latest
 ARG NPM_TOKEN
 ENV NPM_TOKEN=$NPM_TOKEN
-ARG SSH_AUTH_SOCK
 
 # replace shell with bash so we can source files
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh
@@ -19,7 +18,6 @@ ENV NVM_DIR /usr/local/nvm
 ENV NODE_VERSION 18.14.2
 
 # install nvm
-# https://github.com/creationix/nvm#install-script
 RUN curl --silent -o- https://raw.githubusercontent.com/creationix/nvm/v0.31.2/install.sh | bash
 
 # install node and npm
@@ -32,12 +30,13 @@ RUN source $NVM_DIR/nvm.sh \
 ENV NODE_PATH $NVM_DIR/v$NODE_VERSION/lib/node_modules
 ENV PATH $NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
 
-WORKDIR /var/www/html
-
+ENV GIT_SSH_COMMAND='ssh -Tv'
 RUN mkdir -p -m 0700 ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
 RUN --mount=type=ssh
-RUN echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > /root/.npmrc
+RUN echo "@opzetter:registry=https://registry.npmjs.org" >> /root/.npmrc
+RUN echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> /root/.npmrc
 
+WORKDIR /var/www/html
 COPY . .
 CMD npm start
 

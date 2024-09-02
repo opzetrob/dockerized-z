@@ -9,7 +9,7 @@ Het is compleet veilig om dit certificaat te accepteren, waarna je de site met h
 * Kopiëer `.env.example` naar `.env`
 * In `.env`, vul het volledige pad in naar de nieuwe installatie-directory van zWaste, bijvoorbeeld:
 ```dotenv
-ZWASTE_INSTALL_PATH=~/PhpstormProjects/zwaste
+HOST_INSTALL_PATH=~/PhpstormProjects/zwaste
 ```
 De directory `zwaste` zal worden aangemaakt tijdens de installatie, je hoeft deze dus niet zelf te maken. \
 * Open een Terminal-venster en navigeer naar de folder waarin `dockerized-z` is geïnstalleerd. \
@@ -17,12 +17,12 @@ Type het commando `make` om een volledige installatie te starten:
 ```shell
 user@My-Device dockerized-z % make
 ```
-* Er wordt je gevraagd om de locatie uit `ZWASTE_INSTALL_PATH` te bevestigen. Om de installatie te stoppen en de waarde in de `.env` file te corrigeren, typ **'n'**. \
+* Er wordt je gevraagd om de locatie uit `HOST_INSTALL_PATH` te bevestigen. Om de installatie te stoppen en de waarde in de `.env` file te corrigeren, typ **'n'**. \
   Om door te gaan, typ **'y'**.
 * Er worden een _self-signed certificate_ en _key_ gecreëerd, nodig voor HTTPS toegang tot de locale site
 * _zWaste_ (Laravel 10 versie) wordt gedownload vanaf `svn.loki.dev`
 * `composer run copyenvfor default development` wordt gedraaid. \
-  Mocht je een andere `VENDOR` en/of `ENVIRONMENT` willen gebruiken, dan kun je de waardes aanpassen in de `.env` van _dockerized-z_.
+  Mocht je een andere `CLIENT_NAME` en/of `ENVIRONMENT` willen gebruiken, dan kun je de waardes aanpassen in de `.env` van _dockerized-z_.
 * zWaste wordt geïnstalleerd (`composer install`, `npm ci`, `artisan migrate`)
 * De zWaste database wordt gevuld met wat bruikbare data (`artisan db:seed`, `artisan script:run scripts/init_opzet.script`)
 

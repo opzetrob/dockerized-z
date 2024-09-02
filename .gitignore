@@ -1,1 +1,5 @@
 .env
+.env.*
+!.env.example
+.docker/logs
+.docker/cert/*
