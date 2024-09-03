@@ -18,7 +18,7 @@ De directory `zwaste` zal worden aangemaakt tijdens de installatie, je hoeft dez
 * Open een Terminal-venster en navigeer naar de folder waarin `dockerized-z` is geïnstalleerd. \
 Type het commando `make` om een volledige installatie te starten:
 ```shell
-user@My-Device my-dir % dockerized-z % make
+user@My-Device dockerized-z % make
 ```
 * Er wordt je gevraagd om de locatie uit `HOST_INSTALL_PATH` te bevestigen. Om de installatie te stoppen en de waarde in de `.env` file te corrigeren, typ **'n'**. \
   Om door te gaan, typ **'y'**.
@@ -36,8 +36,8 @@ Om niet steeds `docker compose run --rm` te hoeven gebruiken bij het aanroepen v
 In de Terminal, typ `. ./aliases.txt` en voor de duur van je Terminal-sessie kun je de container versies van Composer, Artisan of NPM direct aanroepen, \
 voorbeeld:
 ```shell
-user@My-Device my-dir % artisan optimize:clear # in plaats van
-user@My-Device my-dir % docker compose run --rm artisan optimize:clear
+user@My-Device dockerized-z % artisan optimize:clear # in plaats van
+user@My-Device dockerized-z % docker compose run --rm artisan optimize:clear
 ```
 
 ## Benodigdheden:
