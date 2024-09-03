@@ -2,7 +2,7 @@
 ## Wat is het?
 Met deze repository bouw je met één commando een complete, lokale (development) installatie van _zWaste_, in een Docker omgeving. \
 De `Makefile` in deze repository biedt een aantal commando's die de handelingen rondom de installatie voor hun rekening nemen. \
-Na installatie zal de site beschikbaar zijn onder: https://localhost \
+Na installatie zal de site beschikbaar zijn onder: https://development.client-name.localhost \
 Omdat gebruik gemaakt wordt van een _self-signed certificate_ zal je browser misschien een waarschuwing geven als je deze url voor het eerst bezoekt. \
 Het is compleet veilig om dit certificaat te accepteren, waarna je de site met https kunt bezoeken.
 ## Nieuwe installatie
