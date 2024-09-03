@@ -27,7 +27,6 @@ services:
       - <<: *volume-install
       - ./.docker/httpd/cert/${CERT}:/etc/apache2/ssl/cert.pem
       - ./.docker/httpd/cert/${KEY}:/etc/apache2/ssl/key.pem
-      - ~/PhpstormProjects/cyclus-outside-root/storage:/var/www/storage
     depends_on:
       - mysql
       - mailhog
@@ -52,7 +51,6 @@ services:
     image: z-waste-httpd:latest
     volumes:
       - <<: *volume-install
-      - ~/PhpstormProjects/cyclus-outside-root/storage:/var/www/storage
     tty: true
     depends_on:
       - httpd
@@ -76,8 +74,6 @@ services:
       SERVICE_TAGS: dev
       SERVICE_NAME: ${DB_HOST}
     command: [ "--log_bin_trust_function_creators=1" ]
-    volumes:
-      - ~/PhpstormProjects/databases/${CLIENT_NAME}:/var/lib/mysql
     networks:
       - z-waste-net
 

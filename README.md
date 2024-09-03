@@ -29,8 +29,9 @@ user@My-Device dockerized-z % make
 Een overzicht van de meest gebruikte `make` commando's vind je onder ['Make commands'](#make-commands)
 
 ### Optioneel:
-Om niet `docker compose run --rm` te hoeven gebruiken bij het aanroepen van Composer, Artisan of NPM kun je het bestand `aliases.txt` gebruiken. \
-In de Terminal, typ `. ./aliases.txt` om voor de duur van je Terminal-sessie 
+Om niet steeds `docker compose run --rm` te hoeven gebruiken bij het aanroepen van Composer, Artisan of NPM kun je het bestand `aliases.txt` gebruiken. \
+In de Terminal, typ `. ./aliases.txt` en voor de duur van je Terminal-sessie kun je de container versies van Composer, Artisan of NPM direct aanroepen, \
+voorbeeld: `artisan optimize:clear` i.p.v. `docker compose run --rm artisan optimize:clear`
 
 ## Benodigdheden:
 * Voorlopig worden alleen _Apple Macs_ ondersteund.
@@ -52,6 +53,7 @@ user@My-Device my-dir %
 ```shell
 brew install mkcert
 brew install nss # if you use Firefox
+mkcert -install
 ```
 - Meer..?
 

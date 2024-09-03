@@ -2,4 +2,4 @@
 .env.*
 !.env.example
 .docker/logs
-.docker/cert/*
+.docker/httpd/cert/*

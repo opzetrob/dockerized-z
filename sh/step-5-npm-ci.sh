@@ -11,7 +11,7 @@ echo
 #eval "$(ssh-agent)"
 #NPM_TOKEN="${NPM_TOKEN}" \
 #docker compose --env-file "${ENV}" run --rm npm ci
-npm ci --prefix "/users/robburgers/PhpstormProjects/zwaste-new-next" dev "${CLIENT_NAME}"
+npm ci --prefix "${HOST_INSTALL_PATH}" dev "${CLIENT_NAME}"
 
 echo
 echo "    ┌─ Set NPM public dir ──────────────────────────────────────────────┐"
@@ -23,4 +23,4 @@ npm_env_dir="node_modules/@opzetter/zwaste-ui"
 
 #NPM_TOKEN="${NPM_TOKEN}" \
 #docker compose --env-file "${ENV}" run --rm npm run --prefix "/var/www/html/${npm_env_dir}" dev "${CLIENT_NAME}"
-npm run --prefix "/users/robburgers/PhpstormProjects/zwaste-new-next/${npm_env_dir}" dev "${CLIENT_NAME}"
+npm run --prefix "${HOST_INSTALL_PATH}/${npm_env_dir}" dev "${CLIENT_NAME}"
