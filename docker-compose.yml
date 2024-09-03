@@ -74,6 +74,8 @@ services:
       SERVICE_TAGS: dev
       SERVICE_NAME: ${DB_HOST}
     command: [ "--log_bin_trust_function_creators=1" ]
+    volumes:
+      - ${HOST_DB_PATH}/${CLIENT_NAME}:/var/lib/mysql
     networks:
       - z-waste-net
 

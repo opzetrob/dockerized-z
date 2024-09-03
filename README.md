@@ -2,20 +2,23 @@
 ## Wat is het?
 Met deze repository bouw je met één commando een complete, lokale (development) installatie van _zWaste_, in een Docker omgeving. \
 De `Makefile` in deze repository biedt een aantal commando's die de handelingen rondom de installatie voor hun rekening nemen. \
-Na installatie zal de site beschikbaar zijn onder: https://development.client-name.localhost \
-Omdat gebruik gemaakt wordt van een _self-signed certificate_ zal je browser misschien een waarschuwing geven als je deze url voor het eerst bezoekt. \
-Het is compleet veilig om dit certificaat te accepteren, waarna je de site met https kunt bezoeken.
+Na installatie zal de site beschikbaar zijn onder: https://development.client-name.localhost
+* Omdat gebruik gemaakt wordt van een _self-signed certificate_ zal je browser misschien een waarschuwing geven als je deze url voor het eerst bezoekt.
+* Het is compleet veilig om dit certificaat te accepteren, waarna je de site met https kunt bezoeken.
 ## Nieuwe installatie
 * Kopiëer `.env.example` naar `.env`
-* In `.env`, vul het volledige pad in naar de nieuwe installatie-directory van zWaste, bijvoorbeeld:
+* In `.env`, vul de volgende informatie in:
 ```dotenv
-HOST_INSTALL_PATH=~/PhpstormProjects/zwaste
+CLIENT_NAME=[my-client]
+HOST_INSTALL_PATH=[full-install-path-for-the-project]
+HOST_DB_PATH=[partial-install-path-for-the-project-database] #DB zal worden bewaard in HOST_DB_PATH/CLIENT_NAME
+#MAILHOG_IMAGE=jcalonso/mailhog #Optioneel: Uncomment deze regel op een M1/M2/M* Mac
 ```
-De directory `zwaste` zal worden aangemaakt tijdens de installatie, je hoeft deze dus niet zelf te maken. \
+De directory `zwaste` zal worden aangemaakt tijdens de installatie, je hoeft deze dus niet zelf te maken.
 * Open een Terminal-venster en navigeer naar de folder waarin `dockerized-z` is geïnstalleerd. \
 Type het commando `make` om een volledige installatie te starten:
 ```shell
-user@My-Device dockerized-z % make
+user@My-Device my-dir % dockerized-z % make
 ```
 * Er wordt je gevraagd om de locatie uit `HOST_INSTALL_PATH` te bevestigen. Om de installatie te stoppen en de waarde in de `.env` file te corrigeren, typ **'n'**. \
   Om door te gaan, typ **'y'**.
@@ -31,7 +34,11 @@ Een overzicht van de meest gebruikte `make` commando's vind je onder ['Make comm
 ### Optioneel:
 Om niet steeds `docker compose run --rm` te hoeven gebruiken bij het aanroepen van Composer, Artisan of NPM kun je het bestand `aliases.txt` gebruiken. \
 In de Terminal, typ `. ./aliases.txt` en voor de duur van je Terminal-sessie kun je de container versies van Composer, Artisan of NPM direct aanroepen, \
-voorbeeld: `artisan optimize:clear` i.p.v. `docker compose run --rm artisan optimize:clear`
+voorbeeld:
+```shell
+user@My-Device my-dir % artisan optimize:clear # in plaats van
+user@My-Device my-dir % docker compose run --rm artisan optimize:clear
+```
 
 ## Benodigdheden:
 * Voorlopig worden alleen _Apple Macs_ ondersteund.
@@ -51,9 +58,9 @@ user@My-Device my-dir %
   Om te verifiëren, run: `openssl -v`~~
 - `mkcert` mkcert is een simpele tool voor het maken van locally-trusted development certificaten. Er is geen configuratie nodig.
 ```shell
-brew install mkcert
-brew install nss # if you use Firefox
-mkcert -install
+user@My-Device my-dir % brew install mkcert
+user@My-Device my-dir % brew install nss # als je gebruik maakt van Firefox
+user@My-Device my-dir % mkcert -install
 ```
 - Meer..?
 
