@@ -49,6 +49,8 @@ services:
   artisan:
     container_name: artisan
     image: z-waste-httpd:latest
+    environment:
+      - PHP_IDE_CONFIG=serverName=httpd
     volumes:
       - <<: *volume-install
     tty: true

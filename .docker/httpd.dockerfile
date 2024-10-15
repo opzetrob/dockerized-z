@@ -46,7 +46,7 @@ RUN pecl install xdebug && \
     echo "xdebug.mode=debug" >> "$PHP_INI_DIR/conf.d/docker-php-ext-xdebug.ini" && \
     echo "xdebug.discover_client_host=true" >> "$PHP_INI_DIR/conf.d/docker-php-ext-xdebug.ini" && \
     echo "xdebug.client_host = host.docker.internal" >> "$PHP_INI_DIR/conf.d/docker-php-ext-xdebug.ini" && \
-    echo "xdebug.start_with_request = yes" >> "$PHP_INI_DIR/conf.d/docker-php-ext-xdebug.ini" \
+    echo "xdebug.start_with_request = yes" >> "$PHP_INI_DIR/conf.d/docker-php-ext-xdebug.ini"
 
  # Copy the Apache ssl virtual host configuration to the container
 COPY httpd/default-ssl.conf /etc/apache2/sites-enabled/default-ssl.conf
