@@ -29,3 +29,9 @@ seed:
 
 finish:
 	@ENV=$(ENV) ./sh/step-8-install-finish.sh
+
+down:
+	docker compose down
+
+switch:
+	cp -f ".env.${ENV}" .env
