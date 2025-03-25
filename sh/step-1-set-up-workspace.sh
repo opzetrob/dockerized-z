@@ -1,6 +1,7 @@
 #!/bin/zsh
 # shellcheck source=.env.example
 source "${ENV}"
+COMPOSE_FILE="${COMPOSE_FILE:=docker-compose.yml}"
 export PATH=$PATH:/usr/local/bin
 
 echo
@@ -48,5 +49,6 @@ echo
 echo "    ┌─ DOCKER-UP ────────────────────────────────────────────┐"
 echo "    │  Bringing up the 'httpd' service and it's dependencies │"
 echo "    └────────────────────────────────────────────────────────┘"
+echo "${COMPOSE_FILE}"
 echo
-UID=$(id -u) GID=$(id -g) CLIENT_NAME=${CLIENT_NAME} docker compose --env-file "${ENV}" up -d httpd
+UID=$(id -u) GID=$(id -g) CLIENT_NAME=${CLIENT_NAME} docker compose --file "${COMPOSE_FILE}" --env-file "${ENV}" up -d httpd

@@ -1,8 +1,14 @@
 #!make
 ENV?=.env
 
+ifdef COMPOSE_FILE
+	COMPOSE_FILE := $(COMPOSE_FILE)
+else
+	COMPOSE_FILE := docker-compose.yml
+endif
+
 .DEFAULT_GOAL := all
-all: set-up-workspace copyenvfor update-env composer-install npm-ci
+all: set-up-workspace copyenvfor update-env composer-install npm-ci finish
 m: all migrate
 m-s: all migrate seed
 
@@ -31,7 +37,13 @@ finish:
 	@ENV=$(ENV) ./sh/step-8-install-finish.sh
 
 down:
-	docker compose down
+	docker compose --file "${COMPOSE_FILE}" down
+
+start: set-up-workspace
 
 switch:
 	cp -f ".env.${ENV}" .env
+
+active:
+	@echo "active project: ${CLIENT_NAME}"
+	@echo "install path: ${HOST_INSTALL_PATH}"

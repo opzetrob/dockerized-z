@@ -23,4 +23,5 @@ npm_env_dir="node_modules/@opzetter/zwaste-ui"
 
 #NPM_TOKEN="${NPM_TOKEN}" \
 #docker compose --env-file "${ENV}" run --rm npm run --prefix "/var/www/html/${npm_env_dir}" dev "${CLIENT_NAME}"
+echo "${HOST_INSTALL_PATH}/${npm_env_dir}" dev "${CLIENT_NAME}"
 npm run --prefix "${HOST_INSTALL_PATH}/${npm_env_dir}" dev "${CLIENT_NAME}"

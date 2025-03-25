@@ -1,15 +1,8 @@
-version: '3.9'
-
 x-volume-install:
   &volume-install
     type: bind
-    source: ${PWD}
+    source: ${HOST_INSTALL_PATH}
     target: /var/www/html
-
-networks:
-  z-waste-net:
-    name: z-waste-network
-    driver: bridge
 
 services:
   httpd:
@@ -20,45 +13,48 @@ services:
       args:
         - UID=${UID:-1000}
         - GID=${GID:-1000}
-        - DOMAIN
-        - CERT
-        - KEY
+        - DOMAIN=${DOMAIN}
     image: z-waste-httpd:latest
     ports:
       - "80:80"
       - "443:443"
+      - "5173:5173"
     volumes:
       - <<: *volume-install
+      - ./.docker/httpd/cert/${CERT}:/etc/apache2/ssl/cert.pem
+      - ./.docker/httpd/cert/${KEY}:/etc/apache2/ssl/key.pem
+      - ~/PhpstormProjects/z-sso:/var/www/z-sso
     depends_on:
       - mysql
       - mailhog
-    networks:
-      - z-waste-net
 
   composer:
     container_name: composer
     image: z-waste-httpd:latest
     volumes:
       - <<: *volume-install
+      - ~/PhpstormProjects/z-sso:/var/www/z-sso
+    environment:
+      - XDEBUG_MODE=off
     dns:
       - 192.168.0.1
     depends_on:
       - httpd
     entrypoint: [ 'composer' ]
-    networks:
-      - z-waste-net
 
   artisan:
     container_name: artisan
     image: z-waste-httpd:latest
+    environment:
+      - PHP_IDE_CONFIG=serverName=httpd
     volumes:
       - <<: *volume-install
+      - ~/PhpstormProjects/z-sso:/var/www/z-sso
+    tty: true
     depends_on:
       - httpd
       - mysql
     entrypoint: [ 'php', '/var/www/html/artisan' ]
-    networks:
-      - z-waste-net
 
   mysql:
     container_name: mysql
@@ -68,17 +64,15 @@ services:
     ports:
       - "3306:3306"
     environment:
-      MYSQL_DATABASE: zcalendar
-      MYSQL_USER: zcalendar
-      MYSQL_PASSWORD: zcalendar
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
       MYSQL_ROOT_PASSWORD: secret
       SERVICE_TAGS: dev
-      SERVICE_NAME: mysql
+      SERVICE_NAME: ${DB_HOST}
     command: [ "--log_bin_trust_function_creators=1" ]
     volumes:
-      - mysql-data:/var/lib/mysql
-    networks:
-      - z-waste-net
+      - ${HOST_DB_PATH}/${CLIENT_NAME}:/var/lib/mysql
 
   npm:
     container_name: npm:latest
@@ -92,27 +86,19 @@ services:
     environment:
       - SSH_AUTH_SOCK=/run/host-services/ssh-auth.sock
     volumes:
+      - <<: *volume-install
       - type: bind
         source: /run/host-services/ssh-auth.sock
         target: /run/host-services/ssh-auth.sock
-      - <<: *volume-install
-      - ./logs:/root/.npm/_logs
     ports:
       - "3000:3000"
       - "3001:3001"
-      - "5173:5173"
     working_dir: /var/www/html
     entrypoint: [ 'npm' ]
-    networks:
-      - z-waste-net
 
   mailhog:
     container_name: mailhog
-    image: ${MAILHOG_IMAGE}:latest
+    image: ${MAILHOG_IMAGE:-mailhog/mailhog}:latest
     ports:
       - "1025:1025"
       - "8025:8025"
-    networks:
-      - z-waste-net
-volumes:
-  mysql-data:

@@ -4,11 +4,6 @@ x-volume-install:
     source: ${HOST_INSTALL_PATH}
     target: /var/www/html
 
-networks:
-  z-waste-net:
-    name: z-waste-network
-    driver: bridge
-
 services:
   httpd:
     container_name: httpd
@@ -23,6 +18,7 @@ services:
     ports:
       - "80:80"
       - "443:443"
+      - "5173:5173"
     volumes:
       - <<: *volume-install
       - ./.docker/httpd/cert/${CERT}:/etc/apache2/ssl/cert.pem
@@ -30,8 +26,6 @@ services:
     depends_on:
       - mysql
       - mailhog
-    networks:
-      - z-waste-net
 
   composer:
     container_name: composer
@@ -42,9 +36,9 @@ services:
       - 192.168.0.1
     depends_on:
       - httpd
+    environment:
+      - XDEBUG_MODE=off
     entrypoint: [ 'composer' ]
-    networks:
-      - z-waste-net
 
   artisan:
     container_name: artisan
@@ -58,8 +52,6 @@ services:
       - httpd
       - mysql
     entrypoint: [ 'php', '/var/www/html/artisan' ]
-    networks:
-      - z-waste-net
 
   mysql:
     container_name: mysql
@@ -78,8 +70,6 @@ services:
     command: [ "--log_bin_trust_function_creators=1" ]
     volumes:
       - ${HOST_DB_PATH}/${CLIENT_NAME}:/var/lib/mysql
-    networks:
-      - z-waste-net
 
   npm:
     container_name: npm:latest
@@ -100,11 +90,8 @@ services:
     ports:
       - "3000:3000"
       - "3001:3001"
-      - "5173:5173"
     working_dir: /var/www/html
     entrypoint: [ 'npm' ]
-    networks:
-      - z-waste-net
 
   mailhog:
     container_name: mailhog
@@ -112,5 +99,3 @@ services:
     ports:
       - "1025:1025"
       - "8025:8025"
-    networks:
-      - z-waste-net
