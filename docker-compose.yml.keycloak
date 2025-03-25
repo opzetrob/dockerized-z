@@ -1,0 +1,176 @@
+x-volume-install:
+  &volume-install
+    type: bind
+    source: ${HOST_INSTALL_PATH}
+    target: /var/www/html
+
+networks:
+  keycloak:
+  z-waste-net:
+    name: z-waste-network
+    driver: bridge
+
+services:
+  httpd:
+    container_name: httpd
+    build:
+      context: .docker
+      dockerfile: httpd.dockerfile
+      args:
+        - UID=${UID:-1000}
+        - GID=${GID:-1000}
+        - DOMAIN=${DOMAIN}
+    image: z-waste-httpd:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - <<: *volume-install
+      - ./.docker/httpd/cert/${CERT}:/etc/apache2/ssl/cert.pem
+      - ./.docker/httpd/cert/${KEY}:/etc/apache2/ssl/key.pem
+    depends_on:
+      - mysql
+      - mailhog
+    networks:
+      - z-waste-net
+
+  composer:
+    container_name: composer
+    image: z-waste-httpd:latest
+    volumes:
+      - <<: *volume-install
+    dns:
+      - 192.168.0.1
+    depends_on:
+      - httpd
+    environment:
+      - XDEBUG_MODE=off
+    entrypoint: [ 'composer' ]
+    networks:
+      - z-waste-net
+
+  artisan:
+    container_name: artisan
+    image: z-waste-httpd:latest
+    environment:
+      - PHP_IDE_CONFIG=serverName=httpd
+    volumes:
+      - <<: *volume-install
+    tty: true
+    depends_on:
+      - httpd
+      - mysql
+    entrypoint: [ 'php', '/var/www/html/artisan' ]
+    networks:
+      - z-waste-net
+
+  mysql:
+    container_name: mysql
+    image: mysql:8.0
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: secret
+      SERVICE_TAGS: dev
+      SERVICE_NAME: ${DB_HOST}
+    command: [ "--log_bin_trust_function_creators=1" ]
+    volumes:
+      - ${HOST_DB_PATH}/${CLIENT_NAME}:/var/lib/mysql
+    networks:
+      - z-waste-net
+
+  npm:
+    image: npm:latest
+    container_name: npm
+    build:
+      context: .docker
+      dockerfile: npm.dockerfile
+      ssh:
+        - default
+      args:
+        - NPM_TOKEN=${NPM_TOKEN}
+    environment:
+      - SSH_AUTH_SOCK=/run/host-services/ssh-auth.sock
+    volumes:
+      - <<: *volume-install
+      - type: bind
+        source: /run/host-services/ssh-auth.sock
+        target: /run/host-services/ssh-auth.sock
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+      - "5173:5173"
+    working_dir: /var/www/html
+    entrypoint: [ 'npm' ]
+    networks:
+      - z-waste-net
+
+  mailhog:
+    container_name: mailhog
+    image: ${MAILHOG_IMAGE:-mailhog/mailhog}:latest
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - z-waste-net
+
+  keycloak:
+    container_name: keycloak
+    build:
+      context: .docker
+      dockerfile: keycloak.dockerfile
+      args:
+        - KC_DB=postgres
+        - KC_DB_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+        - KC_DB_USERNAME=${KC_DB_USERNAME}
+        - KC_DB_PASSWORD=${KC_DB_PASSWORD}
+        - KC_HOSTNAME=localhost
+    environment:
+      - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN}
+      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
+    depends_on:
+      - postgres
+      - adminer
+    networks:
+      - z-waste-net
+      - keycloak
+    ports:
+      - "8080:8080"
+    command: [ "start-dev", "--hostname-backchannel-dynamic=false"]
+
+  postgres:
+    image: postgres
+    container_name: postgres
+    restart: always
+    # set shared memory limit when using docker-compose
+    shm_size: 128mb
+    # or set shared memory limit when deploy via swarm stack
+    #volumes:
+    #  - type: tmpfs
+    #    target: /dev/shm
+    #    tmpfs:
+    #      size: 134217728 # 128*2^20 bytes = 128Mb
+    environment:
+      - POSTGRES_USER=${KC_DB_USERNAME}
+      - POSTGRES_PASSWORD=${KC_DB_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    command:
+      ["postgres", "-c", "listen_addresses=*"]
+    networks:
+      - keycloak
+    ports:
+      - "5432:5432"
+
+  adminer:
+    image: adminer
+    container_name: adminer
+    restart: always
+    ports:
+      - "9090:8080"
+    networks:
+      - keycloak
