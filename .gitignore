@@ -3,3 +3,4 @@
 !.env.example
 .docker/logs
 .docker/httpd/cert/*
+/.idea/whisperer_for_laravel.xml
