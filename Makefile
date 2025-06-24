@@ -36,7 +36,7 @@ _finish:
 down: ## Bring down all project containers
 	docker compose --file "${COMPOSE_FILE}" down
 
-start: set-up-workspace ## Start the current project and display project name
+start: _set-up-workspace ## Start the current project and display project name
 	@set -a; . $(ENV); set +a; echo "started project: $$CLIENT_NAME"
 
 switch: ## Replace the contents of `.env` by those of `.env.{CLIENT_NAME}`
