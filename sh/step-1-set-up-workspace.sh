@@ -14,7 +14,7 @@ echo "Certificate: ${CERT}"
 echo "        Key: ${KEY}"
 
 echo
-echo "    ┌─ SELF-SIGNED.CERT AND KEY ───────────────────────────────────────┐"
+echo "    ┌─ SELF-SIGNED CERT AND KEY ───────────────────────────────────────┐"
 echo "    │  Create self signed certificate and key in '.docker/httpd/cert'  │"
 echo "    └──────────────────────────────────────────────────────────────────┘"
 /opt/homebrew/bin/mkcert -key-file "${PWD}/.docker/httpd/cert/${KEY}" \
@@ -22,9 +22,9 @@ echo "    └──────────────────────�
 
 if [ ! -d "${HOST_INSTALL_PATH}" ]; then
 echo
-echo "    ┌─ SVN Checkout ──────────────────────────────┐"
-echo "    │  Perform SVN Checkout of the zWaste branch  │"
-echo "    └─────────────────────────────────────────────┘"
+echo "    ┌─ SVN Checkout ───────────────────────────────────────────┐"
+echo "    │  New install: Perform SVN Checkout of the zWaste branch  │"
+echo "    └──────────────────────────────────────────────────────────┘"
   CURRENT_DIR=${PWD}
   mkdir -p "${HOST_INSTALL_PATH}"
   cd "${HOST_INSTALL_PATH}" || exit
@@ -47,7 +47,7 @@ fi
 
 echo
 echo "    ┌─ DOCKER-UP ────────────────────────────────────────────┐"
-echo "    │  Bringing up the 'httpd' service and it's dependencies │"
+echo "    │  Bringing up the httpd service and it's dependencies   │"
 echo "    └────────────────────────────────────────────────────────┘"
 echo "${COMPOSE_FILE}"
 echo
