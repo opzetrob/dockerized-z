@@ -32,12 +32,14 @@ services:
     image: z-waste-httpd:latest
     volumes:
       - <<: *volume-install
+      - $SSH_AUTH_SOCK:/ssh-agent
     dns:
       - 192.168.0.1
     depends_on:
       - httpd
     environment:
       - XDEBUG_MODE=off
+      - SSH_AUTH_SOCK=/ssh-agent
     entrypoint: [ 'composer' ]
 
   artisan:

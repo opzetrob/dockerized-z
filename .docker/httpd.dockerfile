@@ -63,6 +63,9 @@ RUN mkdir -p /var/www/html
 WORKDIR /var/www/html
 COPY . .
 
+ENV GIT_SSH_COMMAND='ssh -Tv'
+RUN mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
+
 # MacOS staff group's gid is 20, so is the dialout group in alpine linux. We're not using it, let's just remove it.
 ARG UID
 ARG GID
