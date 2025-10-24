@@ -1,4 +1,4 @@
-FROM php:8.1-apache
+FROM php:8.2-apache
 
 RUN apt-get update -y && \
     apt-get upgrade -y && \
@@ -10,6 +10,7 @@ RUN apt-get update -y && \
             libicu-dev \
             libzip-dev \
             zip \
+            gzip \
             curl \
             build-essential \
             libssl-dev \
@@ -30,7 +31,8 @@ RUN docker-php-ext-install pgsql \
                            pdo_mysql \
                            mysqli \
                            intl \
-                           zip
+                           zip \
+                           ftp
 
 RUN docker-php-ext-configure gd \
     --with-jpeg=/usr/include/ \
@@ -40,6 +42,8 @@ RUN docker-php-ext-configure gd \
 # Activate php.ini-development
 RUN mv "$PHP_INI_DIR/php.ini-development" "$PHP_INI_DIR/php.ini"
 RUN echo "memory_limit = 512M" >> "$PHP_INI_DIR/php.ini"
+RUN echo "upload_max_filesize = 128M" >> "$PHP_INI_DIR/php.ini"
+RUN echo "post_max_filesize = 128M" >> "$PHP_INI_DIR/php.ini"
 # Activate XDebug
 RUN pecl install xdebug && \
     docker-php-ext-enable xdebug && \
