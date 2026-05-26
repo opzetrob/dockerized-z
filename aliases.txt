@@ -1,3 +1,4 @@
-alias composer='docker compose run --rm composer'
-alias artisan='docker compose run --rm artisan'
-alias npm='docker compose run --rm npm'
+alias composer='docker compose --file /Users/robburgers/PhpstormProjects/dockerized-z/docker-compose.yml run --rm composer'
+alias artisan='docker compose --file /Users/robburgers/PhpstormProjects/dockerized-z/docker-compose.yml run --rm artisan'
+alias npm='docker compose --file /Users/robburgers/PhpstormProjects/dockerized-z/docker-compose.yml run --rm npm'
+alias npm-dev='docker compose --file /Users/robburgers/PhpstormProjects/dockerized-z/docker-compose.yml run --rm npm run --prefix node_modules/@opzetter/zwaste-ui dev'

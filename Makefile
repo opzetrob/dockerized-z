@@ -1,9 +1,10 @@
 #!make
 ENV?=.env
-SHENV = ENV=$(ENV)
-COMPOSE_FILE ?= docker-compose.yml
+APP_PHP_VERSION := $(shell grep -E '^APP_PHP_VERSION=' $(ENV) 2>/dev/null | cut -d= -f2)
+COMPOSE_FILE ?= docker-compose.yml:docker-compose.$(APP_PHP_VERSION).yml
+SHENV = ENV=$(ENV) COMPOSE_FILE=$(COMPOSE_FILE)
 
-.PHONY: all m m-s _set-up-workspace _copyenvfor _update-env composer-install npm-ci migrate seed _finish down start switch active
+.PHONY: all m m-s _set-up-workspace _copyenvfor _update-env composer-install npm-ci migrate seed _finish down start switch active rebuild
 .DEFAULT_GOAL := all
 all: _set-up-workspace _copyenvfor _update-env composer-install npm-ci _finish
 m: all migrate
@@ -34,13 +35,17 @@ _finish:
 	@$(SHENV) ./sh/step-8-install-finish.sh
 
 down: ## Bring down all project containers
-	docker compose --file "${COMPOSE_FILE}" down
+	COMPOSE_FILE="${COMPOSE_FILE}" docker compose down
 
-start: _set-up-workspace ## Start the current project and display project name
+rebuild: ## Bring down all project containers
+	COMPOSE_FILE="${COMPOSE_FILE}" docker compose build --no-cache httpd
+
+start: _set-up-workspace _copyenvfor _update-env ## Start the current project and display project name
 	@set -a; . $(ENV); set +a; echo "started project: $$CLIENT_NAME"
 
 switch: ## Replace the contents of `.env` by those of `.env.{CLIENT_NAME}`
 	cp -f ".env.${ENV}" .env
+	$(MAKE) start
 
 active: ## Show active project and install path
 	@set -a; . $(ENV); set +a; echo "active project: $$CLIENT_NAME"

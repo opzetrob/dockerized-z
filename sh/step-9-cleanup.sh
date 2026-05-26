@@ -2,6 +2,7 @@
 exit 0
 # shellcheck source=.env.example
 source "${ENV}"
+HOST_INSTALL_PATH="${HOST_INSTALL_PATH:=$HOME/PhpstormProjects/zwaste}"
 export PATH=$PATH:/usr/local/bin
 # shellcheck disable=SC2153
 echo

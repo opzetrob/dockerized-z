@@ -1,7 +1,9 @@
 #!/bin/zsh
 # shellcheck source=.env.example
 source "${ENV}"
-COMPOSE_FILE="${COMPOSE_FILE:=docker-compose.yml}"
+COMPOSE_FILE="${COMPOSE_FILE:=docker-compose.yml:docker-compose.81.yml}"
+HOST_INSTALL_PATH="${HOST_INSTALL_PATH:=$HOME/PhpstormProjects/zwaste}"
+SVN_CHECKOUT_URL="${SVN_CHECKOUT_URL:=http://svn.loki.dev/svn/zcms/zcalendar/default/applicatie/branches/zwaste-new-next}"
 export PATH=$PATH:/usr/local/bin
 
 echo
@@ -51,4 +53,4 @@ echo "    │  Bringing up the httpd service and it's dependencies   │"
 echo "    └────────────────────────────────────────────────────────┘"
 echo "${COMPOSE_FILE}"
 echo
-UID=$(id -u) GID=$(id -g) CLIENT_NAME=${CLIENT_NAME} docker compose --file "${COMPOSE_FILE}" --env-file "${ENV}" up -d httpd
+UID=$(id -u) GID=$(id -g) CLIENT_NAME=${CLIENT_NAME} COMPOSE_FILE="${COMPOSE_FILE}" docker compose --env-file "${ENV}" up -d httpd

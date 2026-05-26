@@ -1,7 +1,7 @@
 x-volume-install:
   &volume-install
     type: bind
-    source: ${HOST_INSTALL_PATH}
+    source: /Users/robburgers/PhpstormProjects/zwaste
     target: /var/www/html
 
 services:
@@ -9,12 +9,12 @@ services:
     container_name: httpd
     build:
       context: .docker
-      dockerfile: httpd.dockerfile
+      dockerfile: ${PHP_DOCKERFILE}
       args:
         - UID=${UID:-1000}
         - GID=${GID:-1000}
         - DOMAIN=${DOMAIN}
-    image: z-waste-httpd:latest
+    image: z-waste-httpd:${PHP_VERSION}
     ports:
       - "80:80"
       - "443:443"
@@ -23,15 +23,22 @@ services:
       - <<: *volume-install
       - ./.docker/httpd/cert/${CERT}:/etc/apache2/ssl/cert.pem
       - ./.docker/httpd/cert/${KEY}:/etc/apache2/ssl/key.pem
+      #- /Users/robburgers/PhpstormProjects/zwaste-2026/zwaste-integration-layer/config/zoink:/var/www/html/vendor/opzet-bv/zoink-config
+      #- /Users/robburgers/PhpstormProjects/zwaste-2026/zwaste-integration-layer/packages/zoink-integration:/var/www/html/vendor/opzet-bv/zoink-integration
     depends_on:
       - mysql
       - mailhog
+    extra_hosts:
+      - "svn.loki.dev:192.168.0.26"
 
   composer:
     container_name: composer
-    image: z-waste-httpd:latest
+    image: z-waste-httpd:${PHP_VERSION}
     volumes:
       - <<: *volume-install
+      #- /Users/robburgers/PhpstormProjects/zwaste-2026/zwaste-integration-layer/config/zoink:/var/www/html/vendor/opzet-bv/zoink-config
+      #- /Users/robburgers/PhpstormProjects/zwaste-2026/zwaste-integration-layer/packages/zoink-integration:/var/www/html/vendor/opzet-bv/zoink-integration
+      - /Users/robburgers/.subversion:/root/.subversion
       - $SSH_AUTH_SOCK:/ssh-agent
     dns:
       - 192.168.0.1
@@ -42,9 +49,10 @@ services:
       - SSH_AUTH_SOCK=/ssh-agent
     entrypoint: [ 'composer' ]
 
+
   artisan:
     container_name: artisan
-    image: z-waste-httpd:latest
+    image: z-waste-httpd:${PHP_VERSION}
     environment:
       - PHP_IDE_CONFIG=serverName=httpd
     volumes:
@@ -54,6 +62,8 @@ services:
       - httpd
       - mysql
     entrypoint: [ 'php', '/var/www/html/artisan' ]
+    extra_hosts:
+      - "svn.loki.dev:192.168.0.26"
 
   mysql:
     container_name: mysql
@@ -63,18 +73,19 @@ services:
     ports:
       - "3306:3306"
     environment:
-      MYSQL_DATABASE: ${DB_DATABASE}
-      MYSQL_USER: ${DB_USERNAME}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_DATABASE:-zcalendar}
+      MYSQL_USER: ${DB_USERNAME:-zcalendar}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-zcalendar}
       MYSQL_ROOT_PASSWORD: secret
       SERVICE_TAGS: dev
-      SERVICE_NAME: ${DB_HOST}
-    command: [ "--log_bin_trust_function_creators=1" ]
+      SERVICE_NAME: ${DB_HOST:-mysql}
+    command: [ "--log_bin_trust_function_creators=1", "--local-infile=1" ]
     volumes:
-      - ${HOST_DB_PATH}/${CLIENT_NAME}:/var/lib/mysql
+      - ${HOST_DB_PATH:-/Users/robburgers/PhpstormProjects}/${CLIENT_NAME}:/var/lib/mysql
 
   npm:
-    container_name: npm:latest
+    container_name: npm
+    image: npm:latest
     build:
       context: .docker
       dockerfile: npm.dockerfile
@@ -82,6 +93,8 @@ services:
         - default
       args:
         - NPM_TOKEN=${NPM_TOKEN}
+        - NODE_VERSION=${NODE_VERSION}
+        - NPM_VERSION=${NPM_VERSION}
     environment:
       - SSH_AUTH_SOCK=/run/host-services/ssh-auth.sock
     volumes:
@@ -97,7 +110,7 @@ services:
 
   mailhog:
     container_name: mailhog
-    image: ${MAILHOG_IMAGE:-mailhog/mailhog}:latest
+    image: ${MAILHOG_IMAGE:-jcalonso/mailhog}:latest
     ports:
       - "1025:1025"
       - "8025:8025"

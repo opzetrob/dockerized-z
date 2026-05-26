@@ -1,6 +1,7 @@
 #!/bin/zsh
 # shellcheck source=.env.example
 source "${ENV}"
+HOST_INSTALL_PATH="${HOST_INSTALL_PATH:=$HOME/PhpstormProjects/zwaste}"
 export PATH=$PATH:/usr/local/bin
 
 echo
@@ -8,10 +9,17 @@ echo "┌─ STEP 5: NPM CI ─────────────────�
 echo "│  Run 'npm ci'                         │"
 echo "└───────────────────────────────────────┘"
 echo
-#eval "$(ssh-agent)"
-#NPM_TOKEN="${NPM_TOKEN}" \
-#docker compose --env-file "${ENV}" run --rm npm ci
-npm ci --prefix "${HOST_INSTALL_PATH}" dev "${CLIENT_NAME}"
+# Install packages without running postinstall
+NPM_TOKEN="${NPM_TOKEN}" \
+docker compose --env-file "${ENV}" run --rm npm ci --ignore-scripts
+
+# Install devDependencies inside zwaste-ui so the build tools are available
+NPM_TOKEN="${NPM_TOKEN}" \
+docker compose --env-file "${ENV}" run --rm npm install --prefix node_modules/@opzetter/zwaste-ui --include=dev
+
+# Now run the postinstall manually
+NPM_TOKEN="${NPM_TOKEN}" \
+docker compose --env-file "${ENV}" run --rm npm run --prefix node_modules/@opzetter/zwaste-webpack-config postinstall
 
 echo
 echo "    ┌─ Set NPM public dir ──────────────────────────────────────────────┐"
@@ -19,9 +27,5 @@ echo "    │  Set the public dir into which the zwaste-ui code will be copied  
 echo "    └───────────────────────────────────────────────────────────────────┘"
 echo
 npm_env_dir="node_modules/@opzetter/zwaste-ui"
-#sed -i '' -e "s~^var DESTINATION_PATH_DEV = '';~var DESTINATION_PATH_DEV = '/var/www/html/public';~" "${HOST_INSTALL_PATH}/${npm_env_dir}/webpack_general.js"
-
-#NPM_TOKEN="${NPM_TOKEN}" \
-#docker compose --env-file "${ENV}" run --rm npm run --prefix "/var/www/html/${npm_env_dir}" dev "${CLIENT_NAME}"
-echo "${HOST_INSTALL_PATH}/${npm_env_dir}" dev "${CLIENT_NAME}"
-npm run --prefix "${HOST_INSTALL_PATH}/${npm_env_dir}" dev "${CLIENT_NAME}"
+NPM_TOKEN="${NPM_TOKEN}" \
+docker compose --env-file "${ENV}" run --rm npm run --prefix "/var/www/html/${npm_env_dir}" dev "${CLIENT_NAME}"

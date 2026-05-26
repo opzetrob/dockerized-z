@@ -1,0 +1,11 @@
+services:
+  httpd:
+    build:
+      dockerfile: httpd82.dockerfile
+    image: z-waste-httpd:8.2
+
+  composer:
+    image: z-waste-httpd:8.2
+
+  artisan:
+    image: z-waste-httpd:8.2
